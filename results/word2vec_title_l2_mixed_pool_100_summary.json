@@ -1,0 +1,248 @@
+{
+  "config": {
+    "dim": 64,
+    "batch_size": 1024,
+    "lr": 0.001,
+    "weight_decay": 1e-06,
+    "epochs": 100,
+    "patience": 5,
+    "seed": 42,
+    "k": 10,
+    "score_batch_size": 65536,
+    "output_dir": "outputs/word2vec_title_l2_mixed_pool_100"
+  },
+  "selection_basis": "sampled-MSE had highest validation nDCG@10 within both MF and NCF in the original 10-run benchmark",
+  "sampling_protocol": "train_unobserved_union_real_negative_v2",
+  "protocol": {
+    "training": "same sampled-MSE negative pairs and per-user temporal split as the original benchmark",
+    "checkpoint_selection": "highest validation nDCG@10; earliest epoch for ties; early stopping patience",
+    "test_usage": "once after checkpoint selection",
+    "title_features": "user-provided frozen 100D Word2Vec movie vectors, pooled over matched title words",
+    "normalization": "L2 normalize each pooled 100D movie title vector before the trainable projection; eps=1e-12; zero rows stay zero",
+    "fusion": "trainable bias-free 100-to-64 linear projection added to trainable movie ID embedding",
+    "cold_items": "original ranking evaluation includes train-known candidate items only",
+    "comparability": "same training and scoring protocol; different feature dimensions imply different projection parameter counts and RNG initialization trajectories"
+  },
+  "normalization_ablation": {
+    "mode": "l2",
+    "stage": "after title mean pooling and before 100-to-64 trainable projection",
+    "raw_comparator": "outputs/word2vec_title_mixed_pool_100",
+    "controlled_variables": "same source vectors, 100D input, 64D projection, trainable parameter count, seed, shared model initialization, split, negative samples, optimizer and early stopping",
+    "report_inclusion_rule": "validation nDCG@10 improvement over raw Word2Vec; ID-only and BERT comparisons also reported"
+  },
+  "split_counts": {
+    "train": 79619,
+    "validation": 9596,
+    "test": 10785
+  },
+  "validation_population": {
+    "eligible_users": 846,
+    "skipped_users": 97,
+    "cold_positives": 4,
+    "total_candidates": 1286965
+  },
+  "test_population": {
+    "eligible_users": 861,
+    "skipped_users": 82,
+    "cold_positives": 13,
+    "total_candidates": 1302731
+  },
+  "ratings_sha256": "06416e597f82b7342361e41163890c81036900f418ad91315590814211dca490",
+  "runtime": {
+    "torch": "2.9.0+cu130",
+    "device": "cuda",
+    "gpu": "NVIDIA GeForce RTX 3060 Laptop GPU"
+  },
+  "results": [
+    {
+      "model": "mf",
+      "regime": "sampled",
+      "loss": "mse",
+      "sampling_protocol": "train_unobserved_union_real_negative_v2",
+      "feature": "frozen user-trained Word2Vec title vectors; mean of in-vocabulary center word vectors; normalization=l2; no BERT",
+      "fusion": "trainable linear projection to 64 dimensions added to trainable item ID embedding",
+      "word2vec": {
+        "model": "user-trained Word2Vec",
+        "embedding_dim": 100,
+        "title_count": 1682,
+        "title_pooling": "mean of in-vocabulary center word vectors; zero for titles with no matches",
+        "frozen": true,
+        "normalization_mode": "l2",
+        "normalization": "L2 normalize each pooled 100D movie title vector before the trainable projection; eps=1e-12; zero rows stay zero",
+        "raw_vector_norms": {
+          "min": 17.33270835876465,
+          "mean": 26.557636260986328,
+          "max": 39.80757141113281
+        },
+        "alignment": "original MovieLens item_id mapped to shared ratings item_idx",
+        "source_file": "data/pretrained_word2vec/movielens_title_embeddings.pt",
+        "source_sha256": "5dd330ad770986c69004befb3714644c16e8faae92bf123e746143a23394f1c7",
+        "source_checkpoint": "C:\\Users\\86137\\Documents\\Codex\\2026-08-31\\referenced-chatgpt-conversation-this-is-an\\outputs\\word2vec\\checkpoints\\w2v_dual_cosine_t0.1_d100_w5_n5_bs2048_lr0.01_mc10_ss1em04_e60_vf0.1_p5_seed42.pt",
+        "source_training_config": {
+          "vocab_size": 14951,
+          "embedding_dim": 100,
+          "embedding_mode": "dual",
+          "score_mode": "cosine",
+          "temperature": 0.1,
+          "min_count": 10,
+          "subsampling_threshold": 0.0001,
+          "window_size": 5,
+          "num_negatives": 5,
+          "batch_size": 2048,
+          "num_epochs": 60,
+          "learning_rate": 0.01,
+          "validation_fraction": 0.1,
+          "patience": 5,
+          "min_delta": 0.0,
+          "seed": 42,
+          "num_workers": 0
+        },
+        "coverage": {
+          "checkpoint": "C:\\Users\\86137\\Documents\\Codex\\2026-08-31\\referenced-chatgpt-conversation-this-is-an\\outputs\\word2vec\\checkpoints\\w2v_dual_cosine_t0.1_d100_w5_n5_bs2048_lr0.01_mc10_ss1em04_e60_vf0.1_p5_seed42.pt",
+          "embedding_dim": 100,
+          "vocabulary_size": 14951,
+          "movie_count": 1682,
+          "covered_movies": 1682,
+          "movie_coverage": 1.0,
+          "matched_title_tokens": 5750,
+          "total_title_tokens": 6695,
+          "token_coverage": 0.8588498879761016,
+          "oov_movie_examples": []
+        },
+        "coverage_sha256": "fe19a325642bdaa0c619c1c99eadee19739b2c14f38752a8d2e5a1a7e2135da6",
+        "nonzero_movie_vectors": 1682,
+        "vector_norm_min": 0.9999998211860657,
+        "vector_norm_mean": 1.0,
+        "vector_norm_max": 1.0000001192092896,
+        "pretraining_corpus": "not established from the provided export metadata"
+      },
+      "config": {
+        "dim": 64,
+        "batch_size": 1024,
+        "lr": 0.001,
+        "weight_decay": 1e-06,
+        "epochs": 100,
+        "patience": 5,
+        "seed": 42,
+        "k": 10,
+        "score_batch_size": 65536,
+        "output_dir": "outputs/word2vec_title_l2_mixed_pool_100"
+      },
+      "parameter_count_trainable": 177026,
+      "best_epoch": 65,
+      "best_validation_ndcg": 0.09921487368298118,
+      "best_validation": {
+        "epoch": 65,
+        "train_loss": 0.06302546222568536,
+        "training_units": 45602,
+        "validation_recall@10": 0.13071678564334918,
+        "validation_hit_ratio@10": 0.3971631205673759,
+        "validation_ndcg@10": 0.09921487368298118
+      },
+      "test": {
+        "evaluated_users": 861,
+        "skipped_users_without_warm_positive": 82,
+        "excluded_cold_positive_count": 13,
+        "total_candidate_scores": 1302731,
+        "recall@10": 0.10465870774889251,
+        "hit_ratio@10": 0.3693379790940767,
+        "ndcg@10": 0.09166376907977916
+      }
+    },
+    {
+      "model": "ncf",
+      "regime": "sampled",
+      "loss": "mse",
+      "sampling_protocol": "train_unobserved_union_real_negative_v2",
+      "feature": "frozen user-trained Word2Vec title vectors; mean of in-vocabulary center word vectors; normalization=l2; no BERT",
+      "fusion": "trainable linear projection to 64 dimensions added to trainable item ID embedding",
+      "word2vec": {
+        "model": "user-trained Word2Vec",
+        "embedding_dim": 100,
+        "title_count": 1682,
+        "title_pooling": "mean of in-vocabulary center word vectors; zero for titles with no matches",
+        "frozen": true,
+        "normalization_mode": "l2",
+        "normalization": "L2 normalize each pooled 100D movie title vector before the trainable projection; eps=1e-12; zero rows stay zero",
+        "raw_vector_norms": {
+          "min": 17.33270835876465,
+          "mean": 26.557636260986328,
+          "max": 39.80757141113281
+        },
+        "alignment": "original MovieLens item_id mapped to shared ratings item_idx",
+        "source_file": "data/pretrained_word2vec/movielens_title_embeddings.pt",
+        "source_sha256": "5dd330ad770986c69004befb3714644c16e8faae92bf123e746143a23394f1c7",
+        "source_checkpoint": "C:\\Users\\86137\\Documents\\Codex\\2026-08-31\\referenced-chatgpt-conversation-this-is-an\\outputs\\word2vec\\checkpoints\\w2v_dual_cosine_t0.1_d100_w5_n5_bs2048_lr0.01_mc10_ss1em04_e60_vf0.1_p5_seed42.pt",
+        "source_training_config": {
+          "vocab_size": 14951,
+          "embedding_dim": 100,
+          "embedding_mode": "dual",
+          "score_mode": "cosine",
+          "temperature": 0.1,
+          "min_count": 10,
+          "subsampling_threshold": 0.0001,
+          "window_size": 5,
+          "num_negatives": 5,
+          "batch_size": 2048,
+          "num_epochs": 60,
+          "learning_rate": 0.01,
+          "validation_fraction": 0.1,
+          "patience": 5,
+          "min_delta": 0.0,
+          "seed": 42,
+          "num_workers": 0
+        },
+        "coverage": {
+          "checkpoint": "C:\\Users\\86137\\Documents\\Codex\\2026-08-31\\referenced-chatgpt-conversation-this-is-an\\outputs\\word2vec\\checkpoints\\w2v_dual_cosine_t0.1_d100_w5_n5_bs2048_lr0.01_mc10_ss1em04_e60_vf0.1_p5_seed42.pt",
+          "embedding_dim": 100,
+          "vocabulary_size": 14951,
+          "movie_count": 1682,
+          "covered_movies": 1682,
+          "movie_coverage": 1.0,
+          "matched_title_tokens": 5750,
+          "total_title_tokens": 6695,
+          "token_coverage": 0.8588498879761016,
+          "oov_movie_examples": []
+        },
+        "coverage_sha256": "fe19a325642bdaa0c619c1c99eadee19739b2c14f38752a8d2e5a1a7e2135da6",
+        "nonzero_movie_vectors": 1682,
+        "vector_norm_min": 0.9999998211860657,
+        "vector_norm_mean": 1.0,
+        "vector_norm_max": 1.0000001192092896,
+        "pretraining_corpus": "not established from the provided export metadata"
+      },
+      "config": {
+        "dim": 64,
+        "batch_size": 1024,
+        "lr": 0.001,
+        "weight_decay": 1e-06,
+        "epochs": 100,
+        "patience": 5,
+        "seed": 42,
+        "k": 10,
+        "score_batch_size": 65536,
+        "output_dir": "outputs/word2vec_title_l2_mixed_pool_100"
+      },
+      "parameter_count_trainable": 184769,
+      "best_epoch": 11,
+      "best_validation_ndcg": 0.08228900764907707,
+      "best_validation": {
+        "epoch": 11,
+        "train_loss": 0.10393780292493408,
+        "training_units": 45602,
+        "validation_recall@10": 0.10373280329141622,
+        "validation_hit_ratio@10": 0.33569739952718675,
+        "validation_ndcg@10": 0.08228900764907707
+      },
+      "test": {
+        "evaluated_users": 861,
+        "skipped_users_without_warm_positive": 82,
+        "excluded_cold_positive_count": 13,
+        "total_candidate_scores": 1302731,
+        "recall@10": 0.09783581027055731,
+        "hit_ratio@10": 0.3530778164924506,
+        "ndcg@10": 0.08424117358480757
+      }
+    }
+  ]
+}

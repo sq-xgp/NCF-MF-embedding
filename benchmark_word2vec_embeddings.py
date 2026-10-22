@@ -3,6 +3,9 @@
 Uses the exact fusion architectures and training/evaluation loop of the static
 BERT experiment, with a 100-to-64 projection instead of 768-to-64. No BERT
 weights or tokenizer are loaded, and no Transformer is run.
+
+Use --normalization l2 for a controlled ablation that normalizes each pooled
+100D title vector before the trainable projection. Defaults preserve raw input.
 """
 from __future__ import annotations
 
@@ -37,9 +40,11 @@ def digest(path: Path) -> str:
 
 
 def load_title_vectors(
-    path: Path, ratings: pd.DataFrame,
+    path: Path, ratings: pd.DataFrame, normalization: str = "none",
 ) -> tuple[torch.Tensor, dict]:
     """Align exported movie vectors by original item ID, never by row position."""
+    if normalization not in ("none", "l2"):
+        raise ValueError(f"Unknown normalization: {normalization}")
     payload = torch.load(path, map_location="cpu", weights_only=True)
     if not isinstance(payload, dict):
         raise ValueError("Expected an exported dictionary with vectors and item_ids")
@@ -72,13 +77,29 @@ def load_title_vectors(
             raise ValueError("Coverage metadata disagrees with the supplied title vectors")
         if coverage["covered_movies"] != int((norms > 0).sum()):
             raise ValueError("Coverage metadata disagrees with the number of nonzero movie vectors")
+    raw_norm_stats = {"min": float(norms.min()), "mean": float(norms.mean()), "max": float(norms.max())}
+    if normalization == "l2":
+        # Normalize the pooled movie representation, not individual word vectors
+        # or the trainable projected/ID vectors. Zero rows remain zero.
+        aligned = torch.nn.functional.normalize(aligned, p=2, dim=1, eps=1e-12)
+        norms = aligned.norm(dim=1)
+        nonzero = norms > 0
+        if not torch.isfinite(aligned).all() or not torch.allclose(
+            norms[nonzero], torch.ones_like(norms[nonzero]), atol=1e-6, rtol=1e-6,
+        ):
+            raise ValueError("Normalized nonzero title vectors must have unit L2 norm")
     metadata = {
         "model": "user-trained Word2Vec",
         "embedding_dim": aligned.shape[1],
         "title_count": len(item_order),
         "title_pooling": payload.get("aggregation", "provided precomputed title vectors"),
         "frozen": True,
-        "normalization": "none; use the supplied exported vector values unchanged",
+        "normalization_mode": normalization,
+        "normalization": (
+            "L2 normalize each pooled 100D movie title vector before the trainable projection; eps=1e-12; zero rows stay zero"
+            if normalization == "l2" else "none; use the supplied exported vector values unchanged"
+        ),
+        "raw_vector_norms": raw_norm_stats,
         "alignment": "original MovieLens item_id mapped to shared ratings item_idx",
         "source_file": path.relative_to(ROOT).as_posix() if path.is_relative_to(ROOT) else str(path),
         "source_sha256": digest(path),
@@ -107,18 +128,24 @@ def population(data) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--embeddings", type=Path, default=Path("data/pretrained_word2vec/movielens_title_embeddings.pt"))
-    parser.add_argument("--output-dir", default="outputs/word2vec_title_mixed_pool_100")
+    parser.add_argument("--output-dir", default=None)
+    parser.add_argument("--normalization", choices=("none", "l2"), default="none")
     parser.add_argument("--epochs", type=int, default=100)
     parser.add_argument("--patience", type=int, default=5)
     args = parser.parse_args()
     if args.epochs <= 0 or args.patience <= 0:
         raise ValueError("epochs and patience must be positive")
+    if args.output_dir is None:
+        args.output_dir = (
+            "outputs/word2vec_title_l2_mixed_pool_100" if args.normalization == "l2"
+            else "outputs/word2vec_title_mixed_pool_100"
+        )
     source = (ROOT / args.embeddings).resolve()
     output_root = ROOT / args.output_dir
     output_root.mkdir(parents=True, exist_ok=True)
     ratings_path = ROOT / "data/ml-100k/u.data"
     ratings = load_ratings(ratings_path)
-    title_vectors, metadata = load_title_vectors(source, ratings)
+    title_vectors, metadata = load_title_vectors(source, ratings, args.normalization)
     torch.save({"embeddings": title_vectors, "metadata": metadata}, output_root / "title_embeddings.pt")
     train, validation, test = temporal_split(ratings)
     known_items = set(train["item_idx"].astype(int))
@@ -135,7 +162,10 @@ def main() -> None:
             name, title_vectors, metadata, config, train, explicit, sampling_data,
             known_items, validation_data, test_data,
             int(ratings["user_idx"].max()) + 1, device, output_root,
-            feature="frozen user-trained Word2Vec title vectors; mean of in-vocabulary center word vectors; no BERT",
+            feature=(
+                "frozen user-trained Word2Vec title vectors; mean of in-vocabulary center word vectors; "
+                f"normalization={args.normalization}; no BERT"
+            ),
             feature_metadata_key="word2vec",
         )
         for name in ("mf", "ncf")
@@ -149,9 +179,17 @@ def main() -> None:
             "checkpoint_selection": "highest validation nDCG@10; earliest epoch for ties; early stopping patience",
             "test_usage": "once after checkpoint selection",
             "title_features": "user-provided frozen 100D Word2Vec movie vectors, pooled over matched title words",
+            "normalization": metadata["normalization"],
             "fusion": "trainable bias-free 100-to-64 linear projection added to trainable movie ID embedding",
             "cold_items": "original ranking evaluation includes train-known candidate items only",
             "comparability": "same training and scoring protocol; different feature dimensions imply different projection parameter counts and RNG initialization trajectories",
+        },
+        "normalization_ablation": {
+            "mode": args.normalization,
+            "stage": "after title mean pooling and before 100-to-64 trainable projection",
+            "raw_comparator": "outputs/word2vec_title_mixed_pool_100",
+            "controlled_variables": "same source vectors, 100D input, 64D projection, trainable parameter count, seed, shared model initialization, split, negative samples, optimizer and early stopping",
+            "report_inclusion_rule": "validation nDCG@10 improvement over raw Word2Vec; ID-only and BERT comparisons also reported",
         },
         "split_counts": {"train": len(train), "validation": len(validation), "test": len(test)},
         "validation_population": population(validation_data),

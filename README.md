@@ -197,14 +197,21 @@ MF 和 NCF 继续使用上述 sampled-MSE 协议；不运行 BERT。
 
 ```powershell
 python benchmark_word2vec_embeddings.py --epochs 100 --patience 5
+# L2 对照：逐电影归一化已池化的 100 维标题向量，再投影并与 ID 相加。
+python benchmark_word2vec_embeddings.py --normalization l2 --epochs 100 --patience 5
 ```
 
 结果和解释见 [WORD2VEC_RESULTS.md](WORD2VEC_RESULTS.md)。完整日志与最佳模型位于
 `outputs/word2vec_title_mixed_pool_100/`；版本管理的结果快照位于
 `results/word2vec_title_mixed_pool_100_summary.json`。
 
-综合报告沿用原路径 `output/pdf/MF_NCF_BERT_Comparison_Report.pdf`，扩充为
-两种 BERT 方式及 Word2Vec 的六组实验、两个 ID 基线、最终对比表格与逐轮曲线。
+L2 对照使用独立目录 `outputs/word2vec_title_l2_mixed_pool_100/`，结果见
+[WORD2VEC_L2_RESULTS.md](WORD2VEC_L2_RESULTS.md)。原始与 L2 两组保持相同架构、
+初始化、采样与训练配置；MF 归一化后的测试 nDCG 高于 ID 基线，NCF 改善后仍低于基线。
+
+综合报告更新版为 `output/pdf/MF_NCF_BERT_Comparison_Report_L2.pdf`，扩充为
+两种 BERT 方式、原始及 L2 Word2Vec 的八组增强模型、两个 ID 基线、最终对比表格与逐轮曲线。
+原 13 页报告文件保留。
 生成脚本读取已有日志，不重新训练：
 
 ```powershell

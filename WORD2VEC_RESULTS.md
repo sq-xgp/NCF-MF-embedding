@@ -1,5 +1,8 @@
 # 自训练 Word2Vec 直接融合实验
 
+本文保留未归一化实验结果。后续 L2 归一化对照见
+[WORD2VEC_L2_RESULTS.md](WORD2VEC_L2_RESULTS.md)，两种版本均已纳入综合 PDF。
+
 ## 方法与数据
 
 使用用户提供的 `data/pretrained_word2vec/movielens_title_embeddings.pt`，
@@ -35,7 +38,7 @@
 
 Word2Vec 的选定训练 MSE 为 MF 0.088228、NCF 0.120499。相对各自 ID 基线，
 测试 nDCG@10 分别变化 -36.61% 和 -19.07%；三个测试排序指标均下降。
-现有六组标题特征实验按验证 nDCG@10 选择时，MF 和 NCF 均选择 BERT 静态词嵌入。
+本表六组标题特征实验按验证 nDCG@10 选择时，MF 和 NCF 均选择 BERT 静态词嵌入。
 
 ## 解释边界
 
@@ -62,8 +65,8 @@ python build_bert_report.py verify
 
 - 原始历史和 checkpoint：`outputs/word2vec_title_mixed_pool_100/`，按项目约定忽略模型产物。
 - 精简结果：`results/word2vec_title_mixed_pool_100_summary.json`。
-- 完整图表数据：`results/bert_comparison_report_data.json`，包含六组增强模型和两个基线。
-- 综合 PDF：`output/pdf/MF_NCF_BERT_Comparison_Report.pdf`，保留原路径并扩充内容。
+- 完整图表数据：`results/bert_comparison_report_data.json`，现包含八组增强模型（含两组 L2 对照）和两个基线。
+- 原始综合 PDF：`output/pdf/MF_NCF_BERT_Comparison_Report.pdf`；包含 L2 对照的完整更新版为 `output/pdf/MF_NCF_BERT_Comparison_Report_L2.pdf`。
 - 图表：`output/pdf/figures/`，同时提供 PNG 和 SVG。
 
 使用的输入向量文件 SHA-256：
