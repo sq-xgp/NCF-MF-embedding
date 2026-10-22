@@ -1,0 +1,133 @@
+{
+  "config": {
+    "dim": 64,
+    "batch_size": 1024,
+    "lr": 0.001,
+    "weight_decay": 1e-06,
+    "epochs": 100,
+    "patience": 5,
+    "seed": 42,
+    "k": 10,
+    "score_batch_size": 65536,
+    "output_dir": "outputs/bert_contextual_title_mixed_pool_100"
+  },
+  "selection_basis": "sampled-MSE was highest by validation nDCG@10 within MF and NCF in the original 10-run benchmark",
+  "protocol": {
+    "training": "same sampled-MSE negative pairs and temporal split as original ranking benchmark",
+    "checkpoint_selection": "highest validation nDCG@10; early stopping patience",
+    "test_usage": "once after checkpoint selection",
+    "title_features": "frozen BERT final-layer contextual token outputs, mean-pooled per title",
+    "cold_items": "original ranking candidate set includes train-known items only"
+  },
+  "split_counts": {
+    "train": 79619,
+    "validation": 9596,
+    "test": 10785
+  },
+  "results": [
+    {
+      "model": "mf",
+      "regime": "sampled",
+      "loss": "mse",
+      "sampling_protocol": "train_unobserved_union_real_negative_v2",
+      "feature": "frozen bert-base-uncased final-layer title token states",
+      "fusion": "trainable linear projection to 64 dimensions added to trainable item ID embedding",
+      "bert": {
+        "model": "bert-base-uncased",
+        "model_snapshot": "86b5e0934494bd15c9632b12f734a8a67f723594",
+        "hidden_size": 768,
+        "layers_run": 12,
+        "attention_heads": 12,
+        "title_count": 1682,
+        "token_count": 11841,
+        "unknown_basic_token_count": 0,
+        "pooling": "arithmetic mean of final-layer contextual token vectors, excluding CLS/SEP/PAD",
+        "encoder_training": "frozen inference; no fine-tuning"
+      },
+      "config": {
+        "dim": 64,
+        "batch_size": 1024,
+        "lr": 0.001,
+        "weight_decay": 1e-06,
+        "epochs": 100,
+        "patience": 5,
+        "seed": 42,
+        "k": 10,
+        "score_batch_size": 65536,
+        "output_dir": "outputs/bert_contextual_title_mixed_pool_100"
+      },
+      "parameter_count_trainable": 219778,
+      "best_epoch": 14,
+      "best_validation_ndcg": 0.08770922396000927,
+      "best_validation": {
+        "epoch": 14,
+        "train_loss": 0.10007116007414582,
+        "training_units": 45602,
+        "validation_recall@10": 0.10715453948519033,
+        "validation_hit_ratio@10": 0.35697399527186763,
+        "validation_ndcg@10": 0.08770922396000927
+      },
+      "test": {
+        "evaluated_users": 861,
+        "skipped_users_without_warm_positive": 82,
+        "excluded_cold_positive_count": 13,
+        "total_candidate_scores": 1302731,
+        "recall@10": 0.1002556326137133,
+        "hit_ratio@10": 0.35656213704994194,
+        "ndcg@10": 0.09143521311498969
+      }
+    },
+    {
+      "model": "ncf",
+      "regime": "sampled",
+      "loss": "mse",
+      "sampling_protocol": "train_unobserved_union_real_negative_v2",
+      "feature": "frozen bert-base-uncased final-layer title token states",
+      "fusion": "trainable linear projection to 64 dimensions added to trainable item ID embedding",
+      "bert": {
+        "model": "bert-base-uncased",
+        "model_snapshot": "86b5e0934494bd15c9632b12f734a8a67f723594",
+        "hidden_size": 768,
+        "layers_run": 12,
+        "attention_heads": 12,
+        "title_count": 1682,
+        "token_count": 11841,
+        "unknown_basic_token_count": 0,
+        "pooling": "arithmetic mean of final-layer contextual token vectors, excluding CLS/SEP/PAD",
+        "encoder_training": "frozen inference; no fine-tuning"
+      },
+      "config": {
+        "dim": 64,
+        "batch_size": 1024,
+        "lr": 0.001,
+        "weight_decay": 1e-06,
+        "epochs": 100,
+        "patience": 5,
+        "seed": 42,
+        "k": 10,
+        "score_batch_size": 65536,
+        "output_dir": "outputs/bert_contextual_title_mixed_pool_100"
+      },
+      "parameter_count_trainable": 227521,
+      "best_epoch": 31,
+      "best_validation_ndcg": 0.10036620239337676,
+      "best_validation": {
+        "epoch": 31,
+        "train_loss": 0.09162856426197344,
+        "training_units": 45602,
+        "validation_recall@10": 0.12722892880892195,
+        "validation_hit_ratio@10": 0.38534278959810875,
+        "validation_ndcg@10": 0.10036620239337676
+      },
+      "test": {
+        "evaluated_users": 861,
+        "skipped_users_without_warm_positive": 82,
+        "excluded_cold_positive_count": 13,
+        "total_candidate_scores": 1302731,
+        "recall@10": 0.10157254579990668,
+        "hit_ratio@10": 0.3554006968641115,
+        "ndcg@10": 0.09257849399886094
+      }
+    }
+  ]
+}

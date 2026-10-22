@@ -1,0 +1,12 @@
+{
+  "checkpoint": "C:\\Users\\86137\\Documents\\Codex\\2026-08-31\\referenced-chatgpt-conversation-this-is-an\\outputs\\word2vec\\checkpoints\\w2v_dual_cosine_t0.1_d100_w5_n5_bs2048_lr0.01_mc10_ss1em04_e60_vf0.1_p5_seed42.pt",
+  "embedding_dim": 100,
+  "vocabulary_size": 14951,
+  "movie_count": 1682,
+  "covered_movies": 1682,
+  "movie_coverage": 1.0,
+  "matched_title_tokens": 5750,
+  "total_title_tokens": 6695,
+  "token_coverage": 0.8588498879761016,
+  "oov_movie_examples": []
+}

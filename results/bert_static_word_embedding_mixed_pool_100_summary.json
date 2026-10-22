@@ -1,0 +1,133 @@
+{
+  "config": {
+    "dim": 64,
+    "batch_size": 1024,
+    "lr": 0.001,
+    "weight_decay": 1e-06,
+    "epochs": 100,
+    "patience": 5,
+    "seed": 42,
+    "k": 10,
+    "score_batch_size": 65536,
+    "output_dir": "outputs/bert_static_word_embedding_mixed_pool_100"
+  },
+  "selection_basis": "sampled-MSE configuration had the highest validation nDCG@10 within both MF and NCF in the original 10-run benchmark",
+  "protocol": {
+    "training": "same sampled-MSE negative pairs and temporal split as the original ranking benchmark",
+    "checkpoint_selection": "highest validation nDCG@10; early stopping patience",
+    "test_usage": "once after checkpoint selection",
+    "title_features": "mean of static BERT input WordPiece embeddings; no Transformer layers",
+    "cold_items": "title features are available for all items, but original ranking benchmark evaluates only train-known candidate items"
+  },
+  "split_counts": {
+    "train": 79619,
+    "validation": 9596,
+    "test": 10785
+  },
+  "results": [
+    {
+      "model": "mf",
+      "regime": "sampled",
+      "loss": "mse",
+      "sampling_protocol": "train_unobserved_union_real_negative_v2",
+      "feature": "frozen bert-base-uncased input word embedding table; mean WordPiece title vector",
+      "fusion": "trainable linear projection to 64 dimensions added to trainable item ID embedding",
+      "bert": {
+        "model": "bert-base-uncased",
+        "model_snapshot": "86b5e0934494bd15c9632b12f734a8a67f723594",
+        "embedding_tensor": "bert.embeddings.word_embeddings.weight",
+        "vocab_size": 30522,
+        "embedding_dim": 768,
+        "bert_hidden_size": 768,
+        "title_count": 1682,
+        "title_pooling": "arithmetic mean of uncased WordPiece input embeddings; no BERT Transformer layers",
+        "token_count": 11841,
+        "unknown_basic_token_count": 0
+      },
+      "config": {
+        "dim": 64,
+        "batch_size": 1024,
+        "lr": 0.001,
+        "weight_decay": 1e-06,
+        "epochs": 100,
+        "patience": 5,
+        "seed": 42,
+        "k": 10,
+        "score_batch_size": 65536,
+        "output_dir": "outputs/bert_static_word_embedding_mixed_pool_100"
+      },
+      "parameter_count_trainable": 219778,
+      "best_epoch": 44,
+      "best_validation_ndcg": 0.10448533385585226,
+      "best_validation": {
+        "epoch": 44,
+        "train_loss": 0.07877476770190794,
+        "training_units": 45602,
+        "validation_recall@10": 0.13019737094177228,
+        "validation_hit_ratio@10": 0.3806146572104019,
+        "validation_ndcg@10": 0.10448533385585226
+      },
+      "test": {
+        "evaluated_users": 861,
+        "skipped_users_without_warm_positive": 82,
+        "excluded_cold_positive_count": 13,
+        "total_candidate_scores": 1302731,
+        "recall@10": 0.10859936442295424,
+        "hit_ratio@10": 0.37630662020905925,
+        "ndcg@10": 0.0975673781413655
+      }
+    },
+    {
+      "model": "ncf",
+      "regime": "sampled",
+      "loss": "mse",
+      "sampling_protocol": "train_unobserved_union_real_negative_v2",
+      "feature": "frozen bert-base-uncased input word embedding table; mean WordPiece title vector",
+      "fusion": "trainable linear projection to 64 dimensions added to trainable item ID embedding",
+      "bert": {
+        "model": "bert-base-uncased",
+        "model_snapshot": "86b5e0934494bd15c9632b12f734a8a67f723594",
+        "embedding_tensor": "bert.embeddings.word_embeddings.weight",
+        "vocab_size": 30522,
+        "embedding_dim": 768,
+        "bert_hidden_size": 768,
+        "title_count": 1682,
+        "title_pooling": "arithmetic mean of uncased WordPiece input embeddings; no BERT Transformer layers",
+        "token_count": 11841,
+        "unknown_basic_token_count": 0
+      },
+      "config": {
+        "dim": 64,
+        "batch_size": 1024,
+        "lr": 0.001,
+        "weight_decay": 1e-06,
+        "epochs": 100,
+        "patience": 5,
+        "seed": 42,
+        "k": 10,
+        "score_batch_size": 65536,
+        "output_dir": "outputs/bert_static_word_embedding_mixed_pool_100"
+      },
+      "parameter_count_trainable": 227521,
+      "best_epoch": 46,
+      "best_validation_ndcg": 0.10159744328036449,
+      "best_validation": {
+        "epoch": 46,
+        "train_loss": 0.0777813645432557,
+        "training_units": 45602,
+        "validation_recall@10": 0.13484096830879436,
+        "validation_hit_ratio@10": 0.38534278959810875,
+        "validation_ndcg@10": 0.10159744328036449
+      },
+      "test": {
+        "evaluated_users": 861,
+        "skipped_users_without_warm_positive": 82,
+        "excluded_cold_positive_count": 13,
+        "total_candidate_scores": 1302731,
+        "recall@10": 0.10228519640677854,
+        "hit_ratio@10": 0.3554006968641115,
+        "ndcg@10": 0.09136082394768766
+      }
+    }
+  ]
+}

@@ -1,0 +1,313 @@
+{
+  "config": {
+    "dim": 64,
+    "batch_size": 1024,
+    "lr": 0.001,
+    "weight_decay": 1e-06,
+    "epochs": 100,
+    "patience": 5,
+    "seed": 42,
+    "k": 10,
+    "score_batch_size": 65536,
+    "output_dir": "outputs/ranking_benchmark_mixed_pool_100"
+  },
+  "protocol": {
+    "data": "existing MovieLens 100K u.data and temporal_split()",
+    "positive": "rating > 3 (ratings 4 and 5)",
+    "explicit_negative": "rating < 3 (ratings 1 and 2)",
+    "neutral": "rating 3: no training target; remains an unknown test candidate",
+    "explicit_training": "all observed positive and negative train records",
+    "sampled_training": "one item from the union of user's observed train negatives (ratings 1-2) and train-unobserved globally train-known items per train positive; uniform with replacement, resampled each epoch; same pairs for every run",
+    "sampled_negative_caveat": "unobserved items are unlabeled, not confirmed disliked; future interactions are not inspected while sampling",
+    "candidate_items": "all globally train-known items excluding the user's earlier interactions",
+    "validation_history": "train interactions",
+    "test_history": "train + validation interactions",
+    "relevance": "warm target items with rating > 3",
+    "aggregation": "macro over users with at least one warm positive target item",
+    "hit_ratio": "fraction of evaluated users with >=1 relevant item in Top-K",
+    "checkpoint_selection": "highest validation nDCG@K, earliest epoch on ties",
+    "test_usage": "once per run after checkpoint selection"
+  },
+  "split_counts": {
+    "train": 79619,
+    "validation": 9596,
+    "test": 10785
+  },
+  "explicit_train_counts": {
+    "positive": 45602,
+    "negative": 12650,
+    "neutral_excluded": 21367
+  },
+  "validation_population": {
+    "eligible_users": 846,
+    "skipped_users": 97,
+    "cold_positives": 4
+  },
+  "test_population": {
+    "eligible_users": 861,
+    "skipped_users": 82,
+    "cold_positives": 13
+  },
+  "results": [
+    {
+      "model": "mf",
+      "regime": "explicit",
+      "loss": "mse",
+      "sampling_protocol": null,
+      "parameter_count": 170626,
+      "best_epoch": 2,
+      "best_validation_ndcg": 0.06581152019712183,
+      "best_validation": {
+        "epoch": 2,
+        "train_loss": 0.21308914681433944,
+        "training_units": 58252,
+        "validation_recall@10": 0.06976555971563543,
+        "validation_hit_ratio@10": 0.2624113475177305,
+        "validation_ndcg@10": 0.06581152019712183
+      },
+      "test": {
+        "evaluated_users": 861,
+        "skipped_users_without_warm_positive": 82,
+        "excluded_cold_positive_count": 13,
+        "total_candidate_scores": 1302731,
+        "recall@10": 0.0647671562954748,
+        "hit_ratio@10": 0.27990708478513354,
+        "ndcg@10": 0.06604075304326752
+      }
+    },
+    {
+      "model": "mf",
+      "regime": "explicit",
+      "loss": "bce",
+      "sampling_protocol": null,
+      "parameter_count": 170626,
+      "best_epoch": 2,
+      "best_validation_ndcg": 0.06556941819823574,
+      "best_validation": {
+        "epoch": 2,
+        "train_loss": 0.6183152919343431,
+        "training_units": 58252,
+        "validation_recall@10": 0.0696342227048658,
+        "validation_hit_ratio@10": 0.2624113475177305,
+        "validation_ndcg@10": 0.06556941819823574
+      },
+      "test": {
+        "evaluated_users": 861,
+        "skipped_users_without_warm_positive": 82,
+        "excluded_cold_positive_count": 13,
+        "total_candidate_scores": 1302731,
+        "recall@10": 0.0655608070891256,
+        "hit_ratio@10": 0.28222996515679444,
+        "ndcg@10": 0.06629660291994999
+      }
+    },
+    {
+      "model": "mf",
+      "regime": "sampled",
+      "loss": "mse",
+      "sampling_protocol": "train_unobserved_union_real_negative_v2",
+      "parameter_count": 170626,
+      "best_epoch": 5,
+      "best_validation_ndcg": 0.07291082260721302,
+      "best_validation": {
+        "epoch": 5,
+        "train_loss": 0.14338106187604133,
+        "training_units": 45602,
+        "validation_recall@10": 0.08379057621149424,
+        "validation_hit_ratio@10": 0.26595744680851063,
+        "validation_ndcg@10": 0.07291082260721302
+      },
+      "test": {
+        "evaluated_users": 861,
+        "skipped_users_without_warm_positive": 82,
+        "excluded_cold_positive_count": 13,
+        "total_candidate_scores": 1302731,
+        "recall@10": 0.08898140656864245,
+        "hit_ratio@10": 0.3403019744483159,
+        "ndcg@10": 0.08301583485870104
+      }
+    },
+    {
+      "model": "mf",
+      "regime": "sampled",
+      "loss": "bce",
+      "sampling_protocol": "train_unobserved_union_real_negative_v2",
+      "parameter_count": 170626,
+      "best_epoch": 3,
+      "best_validation_ndcg": 0.07195669493191462,
+      "best_validation": {
+        "epoch": 3,
+        "train_loss": 0.6012748481463897,
+        "training_units": 45602,
+        "validation_recall@10": 0.07985809942468071,
+        "validation_hit_ratio@10": 0.2695035460992908,
+        "validation_ndcg@10": 0.07195669493191462
+      },
+      "test": {
+        "evaluated_users": 861,
+        "skipped_users_without_warm_positive": 82,
+        "excluded_cold_positive_count": 13,
+        "total_candidate_scores": 1302731,
+        "recall@10": 0.0755625767410044,
+        "hit_ratio@10": 0.3042973286875726,
+        "ndcg@10": 0.07453346930689224
+      }
+    },
+    {
+      "model": "mf",
+      "regime": "sampled",
+      "loss": "bpr",
+      "sampling_protocol": "train_unobserved_union_real_negative_v2",
+      "parameter_count": 170626,
+      "best_epoch": 3,
+      "best_validation_ndcg": 0.07148137864359064,
+      "best_validation": {
+        "epoch": 3,
+        "train_loss": 0.5248346888942157,
+        "training_units": 45602,
+        "validation_recall@10": 0.08084223152583406,
+        "validation_hit_ratio@10": 0.2695035460992908,
+        "validation_ndcg@10": 0.07148137864359064
+      },
+      "test": {
+        "evaluated_users": 861,
+        "skipped_users_without_warm_positive": 82,
+        "excluded_cold_positive_count": 13,
+        "total_candidate_scores": 1302731,
+        "recall@10": 0.07550119363664803,
+        "hit_ratio@10": 0.3042973286875726,
+        "ndcg@10": 0.07443515113814475
+      }
+    },
+    {
+      "model": "ncf",
+      "regime": "explicit",
+      "loss": "mse",
+      "sampling_protocol": null,
+      "parameter_count": 178369,
+      "best_epoch": 1,
+      "best_validation_ndcg": 0.033641035778676796,
+      "best_validation": {
+        "epoch": 1,
+        "train_loss": 0.16841069181374058,
+        "training_units": 58252,
+        "validation_recall@10": 0.03670931883501151,
+        "validation_hit_ratio@10": 0.16312056737588654,
+        "validation_ndcg@10": 0.033641035778676796
+      },
+      "test": {
+        "evaluated_users": 861,
+        "skipped_users_without_warm_positive": 82,
+        "excluded_cold_positive_count": 13,
+        "total_candidate_scores": 1302731,
+        "recall@10": 0.04214144819871355,
+        "hit_ratio@10": 0.22067363530778164,
+        "ndcg@10": 0.04025675615833752
+      }
+    },
+    {
+      "model": "ncf",
+      "regime": "explicit",
+      "loss": "bce",
+      "sampling_protocol": null,
+      "parameter_count": 178369,
+      "best_epoch": 1,
+      "best_validation_ndcg": 0.028121133430028457,
+      "best_validation": {
+        "epoch": 1,
+        "train_loss": 0.5080368292902243,
+        "training_units": 58252,
+        "validation_recall@10": 0.0342293531662469,
+        "validation_hit_ratio@10": 0.16666666666666666,
+        "validation_ndcg@10": 0.028121133430028457
+      },
+      "test": {
+        "evaluated_users": 861,
+        "skipped_users_without_warm_positive": 82,
+        "excluded_cold_positive_count": 13,
+        "total_candidate_scores": 1302731,
+        "recall@10": 0.036460842602477596,
+        "hit_ratio@10": 0.18815331010452963,
+        "ndcg@10": 0.03193543734658799
+      }
+    },
+    {
+      "model": "ncf",
+      "regime": "sampled",
+      "loss": "mse",
+      "sampling_protocol": "train_unobserved_union_real_negative_v2",
+      "parameter_count": 178369,
+      "best_epoch": 28,
+      "best_validation_ndcg": 0.09492289070243154,
+      "best_validation": {
+        "epoch": 28,
+        "train_loss": 0.08161415352101839,
+        "training_units": 45602,
+        "validation_recall@10": 0.1254904427927395,
+        "validation_hit_ratio@10": 0.3617021276595745,
+        "validation_ndcg@10": 0.09492289070243154
+      },
+      "test": {
+        "evaluated_users": 861,
+        "skipped_users_without_warm_positive": 82,
+        "excluded_cold_positive_count": 13,
+        "total_candidate_scores": 1302731,
+        "recall@10": 0.09975248713616536,
+        "hit_ratio@10": 0.35772357723577236,
+        "ndcg@10": 0.08672659420791536
+      }
+    },
+    {
+      "model": "ncf",
+      "regime": "sampled",
+      "loss": "bce",
+      "sampling_protocol": "train_unobserved_union_real_negative_v2",
+      "parameter_count": 178369,
+      "best_epoch": 21,
+      "best_validation_ndcg": 0.09272543270451987,
+      "best_validation": {
+        "epoch": 21,
+        "train_loss": 0.30684399029167225,
+        "training_units": 45602,
+        "validation_recall@10": 0.11815763999573063,
+        "validation_hit_ratio@10": 0.34988179669030733,
+        "validation_ndcg@10": 0.09272543270451987
+      },
+      "test": {
+        "evaluated_users": 861,
+        "skipped_users_without_warm_positive": 82,
+        "excluded_cold_positive_count": 13,
+        "total_candidate_scores": 1302731,
+        "recall@10": 0.09886798046928004,
+        "hit_ratio@10": 0.3321718931475029,
+        "ndcg@10": 0.08753014166295923
+      }
+    },
+    {
+      "model": "ncf",
+      "regime": "sampled",
+      "loss": "bpr",
+      "sampling_protocol": "train_unobserved_union_real_negative_v2",
+      "parameter_count": 178369,
+      "best_epoch": 23,
+      "best_validation_ndcg": 0.09038077232114047,
+      "best_validation": {
+        "epoch": 23,
+        "train_loss": 0.1564586624371776,
+        "training_units": 45602,
+        "validation_recall@10": 0.11475440923485376,
+        "validation_hit_ratio@10": 0.3475177304964539,
+        "validation_ndcg@10": 0.09038077232114047
+      },
+      "test": {
+        "evaluated_users": 861,
+        "skipped_users_without_warm_positive": 82,
+        "excluded_cold_positive_count": 13,
+        "total_candidate_scores": 1302731,
+        "recall@10": 0.09550949222758398,
+        "hit_ratio@10": 0.34610917537746805,
+        "ndcg@10": 0.08850090031308092
+      }
+    }
+  ]
+}

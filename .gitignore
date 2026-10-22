@@ -1,0 +1,26 @@
+# MovieLens 100K forbids redistribution without separate permission.
+/data/ml-100k/
+/data/*.zip
+
+# Generated models, metrics, plots, and temporary experiments.
+/outputs/
+/work/
+/tmp/
+# Original Word2Vec training checkpoint; exported input vectors are versioned.
+/data/pretrained_word2vec/w2v_*.pt
+
+# Python and local environments.
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+.env
+.env.*
+
+# OS / editor files.
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
