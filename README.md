@@ -162,6 +162,10 @@ python benchmark_side_features.py --epochs 100 --output-dir outputs/side_feature
 
 ## BERT 静态词嵌入排名实验
 
+Jupyter 手工调试入口为 `debug_movie_embeddings.ipynb`（初始未执行），安装和启动方式见
+[JUPYTER_DEBUG_GUIDE.md](JUPYTER_DEBUG_GUIDE.md)。它从数据集读取标题，先逐步检查小批输入，
+最后分批导出全部电影向量；Notebook 与独立脚本的输出文件分别保存。
+
 用于手工逐行调试的独立脚本是 `export_movie_title_embeddings.py`，从 MovieLens
 `u.item` 读取全部电影 ID 和标题，分批抽取并导出对应向量，可修改 `mode` 和
 `batch_size` 后在 PyCharm 中 Debug。配置步骤和变量格式见

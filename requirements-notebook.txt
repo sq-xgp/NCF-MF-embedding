@@ -1,0 +1,4 @@
+-r requirements.txt
+notebook>=7
+ipykernel>=6
+nbformat>=5

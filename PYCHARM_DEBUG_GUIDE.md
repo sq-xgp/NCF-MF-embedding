@@ -1,5 +1,9 @@
 # 在 PyCharm 手工调试标题 embedding
 
+如果按老师要求使用 Jupyter，请打开 `debug_movie_embeddings.ipynb`，并按
+[JUPYTER_DEBUG_GUIDE.md](JUPYTER_DEBUG_GUIDE.md) 操作。Notebook 初始没有执行结果，
+供你自己逐个单元格调试；下面保留的是直接调试 `.py` 脚本的方法。
+
 脚本：`export_movie_title_embeddings.py`。它独立运行，仅依赖 `torch` 和 `transformers`，
 不依赖推荐训练脚本。请自己逐行执行，并记录观察；下面的形状是说明，不是实际调试记录。
 

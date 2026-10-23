@@ -1,0 +1,42 @@
+{
+  "script": "export_movie_title_embeddings.py",
+  "script_sha256": "39969b79c71a95f7aa6add1d1eedf338864a1883a40a0e09a9e1bc6e086baed5",
+  "source": "data/ml-100k/u.item",
+  "movie_count": 1682,
+  "notebook": "debug_movie_embeddings.ipynb",
+  "notebook_code_cells": 37,
+  "notebook_executed": false,
+  "exports": [
+    {
+      "mode": "sentence",
+      "shape": [
+        1682,
+        768
+      ],
+      "dtype": "torch.float32",
+      "finite": true,
+      "ids_and_titles_match_dataset": true,
+      "output": "outputs/movie_titles_sentence.pt",
+      "output_bytes": 5229259
+    },
+    {
+      "mode": "word",
+      "shape": [
+        1682,
+        768
+      ],
+      "dtype": "torch.float32",
+      "finite": true,
+      "ids_and_titles_match_dataset": true,
+      "output": "outputs/movie_titles_word.pt",
+      "output_bytes": 5229231
+    }
+  ],
+  "jupyter": {
+    "notebook_version": "7.6.3",
+    "ipykernel_version": "7.4.0",
+    "kernel_name": "ncf-mf-embedding",
+    "kernel_executable": "D:\\code\\NCF-MF-embedding\\.venv\\Scripts\\python.exe",
+    "notebook_format_valid": true
+  }
+}
