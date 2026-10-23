@@ -162,8 +162,9 @@ python benchmark_side_features.py --epochs 100 --output-dir outputs/side_feature
 
 ## BERT 静态词嵌入排名实验
 
-用于手工逐行调试的独立脚本是 `export_movie_title_embeddings.py`，可直接修改
-`titles` 和 `mode` 后在 PyCharm 中 Debug。配置步骤和变量格式见
+用于手工逐行调试的独立脚本是 `export_movie_title_embeddings.py`，从 MovieLens
+`u.item` 读取全部电影 ID 和标题，分批抽取并导出对应向量，可修改 `mode` 和
+`batch_size` 后在 PyCharm 中 Debug。配置步骤和变量格式见
 [PYCHARM_DEBUG_GUIDE.md](PYCHARM_DEBUG_GUIDE.md)。
 
 两种抽取共用 `bert_embeddings.py`，通过 `transformers.AutoTokenizer` 和
