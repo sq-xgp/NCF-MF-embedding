@@ -10,11 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 import os
-import re
-import struct
-import unicodedata
 from dataclasses import asdict
 from pathlib import Path
 
@@ -35,176 +31,17 @@ from benchmark_ranking_losses import (
     train_epoch,
 )
 from train import load_ratings, set_seed, temporal_split
-
-
-MODEL_NAME = "bert-base-uncased"
-
-
-def default_model_dir() -> Path:
-    hub = Path(os.environ.get("HF_HOME", Path.home() / ".cache" / "huggingface")) / "hub"
-    snapshots = hub / "models--bert-base-uncased" / "snapshots"
-    if snapshots.exists():
-        available = sorted(
-            (path for path in snapshots.iterdir() if (path / "model.safetensors").exists()),
-            key=lambda path: path.name,
-        )
-        if available:
-            return available[-1]
-    return snapshots
-
-
-def read_word_embedding_table(model_dir: Path) -> tuple[torch.Tensor, dict[str, object]]:
-    """Read only embeddings.word_embeddings.weight from a BERT safetensors file."""
-    model_file = model_dir / "model.safetensors"
-    vocab_file = model_dir / "vocab.txt"
-    config_file = model_dir / "config.json"
-    for required in (model_file, vocab_file, config_file):
-        if not required.exists():
-            raise FileNotFoundError(
-                f"Missing {required}. Download/cache {MODEL_NAME} or pass --bert-model-dir."
-            )
-    with model_file.open("rb") as handle:
-        header_size_raw = handle.read(8)
-        if len(header_size_raw) != 8:
-            raise ValueError(f"Invalid safetensors header: {model_file}")
-        header_size = struct.unpack("<Q", header_size_raw)[0]
-        header = json.loads(handle.read(header_size))
-        key = "embeddings.word_embeddings.weight"
-        if key not in header:
-            key = "bert.embeddings.word_embeddings.weight"
-        if key not in header:
-            raise KeyError(f"No BERT word embedding tensor found in {model_file}")
-        entry = header[key]
-        if entry["dtype"] != "F32":
-            raise TypeError(f"Expected float32 BERT word embeddings, got {entry['dtype']}")
-        shape = tuple(int(value) for value in entry["shape"])
-        start, end = (int(value) for value in entry["data_offsets"])
-        handle.seek(8 + header_size + start)
-        raw = handle.read(end - start)
-    expected_bytes = math.prod(shape) * np.dtype("<f4").itemsize
-    if len(raw) != expected_bytes:
-        raise ValueError(f"Truncated BERT word embedding tensor: expected {expected_bytes} bytes")
-    table = np.frombuffer(raw, dtype="<f4").reshape(shape).copy()
-    model_config = json.loads(config_file.read_text(encoding="utf-8"))
-    vocab = vocab_file.read_text(encoding="utf-8").splitlines()
-    if len(vocab) != shape[0]:
-        raise ValueError(f"Vocabulary has {len(vocab)} tokens but embedding table has {shape[0]} rows")
-    metadata = {
-        "model": MODEL_NAME,
-        "model_snapshot": model_dir.name,
-        "embedding_tensor": key,
-        "vocab_size": len(vocab),
-        "embedding_dim": shape[1],
-        "bert_hidden_size": model_config.get("hidden_size"),
-    }
-    return torch.from_numpy(table), {**metadata, "vocab": vocab}
-
-
-def basic_tokens(text: str) -> list[str]:
-    """Small uncased BERT BasicTokenizer equivalent for English movie titles."""
-    cleaned = []
-    for char in text:
-        codepoint = ord(char)
-        if codepoint in (0, 0xFFFD) or (codepoint < 32 and char not in "\t\n\r"):
-            continue
-        if char.isspace():
-            cleaned.append(" ")
-        else:
-            cleaned.append(char)
-    normalized = unicodedata.normalize("NFD", "".join(cleaned).lower())
-    text = "".join(char for char in normalized if unicodedata.category(char) != "Mn")
-    tokens: list[str] = []
-    current = []
-    for char in text:
-        category = unicodedata.category(char)
-        if char.isspace():
-            if current:
-                tokens.append("".join(current))
-                current = []
-        elif category.startswith("P") or category.startswith("S"):
-            if current:
-                tokens.append("".join(current))
-                current = []
-            tokens.append(char)
-        else:
-            current.append(char)
-    if current:
-        tokens.append("".join(current))
-    return tokens
-
-
-def wordpiece_ids(text: str, vocab: dict[str, int], unk_id: int) -> tuple[list[int], int]:
-    ids: list[int] = []
-    unknown = 0
-    for token in basic_tokens(text):
-        if len(token) > 100:
-            ids.append(unk_id)
-            unknown += 1
-            continue
-        start = 0
-        pieces: list[str] = []
-        while start < len(token):
-            end = len(token)
-            piece = None
-            while start < end:
-                candidate = token[start:end] if start == 0 else "##" + token[start:end]
-                if candidate in vocab:
-                    piece = candidate
-                    break
-                end -= 1
-            if piece is None:
-                pieces = ["[UNK]"]
-                unknown += 1
-                break
-            pieces.append(piece)
-            start = end
-        ids.extend(vocab[piece] for piece in pieces)
-    return ids, unknown
+from bert_embeddings import default_model_dir, extract_bert_embeddings, movie_titles
 
 
 def build_title_embeddings(
     project_dir: Path, ratings: pd.DataFrame, model_dir: Path,
+    device: torch.device | str = "cpu", batch_size: int = 32,
 ) -> tuple[torch.Tensor, dict[str, object]]:
-    word_table, model_info = read_word_embedding_table(model_dir)
-    vocab = {token: index for index, token in enumerate(model_info.pop("vocab"))}
-    unknown_id = vocab["[UNK]"]
-    item_info = pd.read_csv(
-        project_dir / "data/ml-100k/u.item",
-        sep="|",
-        header=None,
-        encoding="latin-1",
-        usecols=[0, 1],
-        names=["item_id", "title"],
-        engine="python",
+    return extract_bert_embeddings(
+        movie_titles(project_dir, ratings), model_dir,
+        mode="word", device=device, batch_size=batch_size,
     )
-    item_order = (
-        ratings[["item_id", "item_idx"]]
-        .drop_duplicates()
-        .sort_values("item_idx")["item_id"]
-        .tolist()
-    )
-    title_by_id = item_info.set_index("item_id")["title"].to_dict()
-    vectors = torch.zeros((len(item_order), word_table.shape[1]), dtype=torch.float32)
-    token_count = 0
-    unknown_count = 0
-    for item_idx, item_id in enumerate(item_order):
-        if item_id not in title_by_id:
-            raise ValueError(f"No title found for MovieLens item_id={item_id}")
-        ids, unknown = wordpiece_ids(str(title_by_id[item_id]), vocab, unknown_id)
-        unknown_count += unknown
-        if ids:
-            vectors[item_idx] = word_table[ids].mean(dim=0)
-            token_count += len(ids)
-        else:
-            vectors[item_idx] = word_table[unknown_id]
-            unknown_count += 1
-    model_info.update({
-        "title_count": len(item_order),
-        "title_pooling": "arithmetic mean of uncased WordPiece input embeddings; no BERT Transformer layers",
-        "token_count": token_count,
-        "unknown_basic_token_count": unknown_count,
-    })
-    return vectors, model_info
 
 
 class StaticTitleMF(nn.Module):
@@ -344,18 +181,22 @@ def run_one(
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--bert-model-dir", type=Path, default=None)
-    parser.add_argument("--output-dir", default="outputs/bert_static_word_embedding_mixed_pool_100")
+    parser.add_argument("--output-dir", default="outputs/bert_static_word_embedding_transformers_100")
     parser.add_argument("--epochs", type=int, default=100)
     parser.add_argument("--patience", type=int, default=5)
+    parser.add_argument("--batch-size-encode", type=int, default=32)
     args = parser.parse_args()
-    if args.epochs <= 0 or args.patience <= 0:
-        raise ValueError("epochs and patience must be positive")
+    if min(args.epochs, args.patience, args.batch_size_encode) <= 0:
+        raise ValueError("epochs, patience, and batch-size-encode must be positive")
     project_dir = Path(__file__).resolve().parent
     output_root = project_dir / args.output_dir
     output_root.mkdir(parents=True, exist_ok=True)
     model_dir = args.bert_model_dir or default_model_dir()
     ratings = load_ratings(project_dir / "data/ml-100k/u.data")
-    title_vectors, model_info = build_title_embeddings(project_dir, ratings, model_dir)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    title_vectors, model_info = build_title_embeddings(
+        project_dir, ratings, model_dir, device, args.batch_size_encode,
+    )
     torch.save({"embeddings": title_vectors, "metadata": model_info}, output_root / "title_embeddings.pt")
     train, validation, test = temporal_split(ratings)
     known_items = set(train["item_idx"].astype(int))
@@ -364,7 +205,6 @@ def main() -> None:
     validation_data = build_ranking_data(validation, train, known_items)
     test_history = pd.concat((train, validation), ignore_index=True)
     test_data = build_ranking_data(test, test_history, known_items)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(json.dumps({"device": str(device), "bert": {k: v for k, v in model_info.items() if k != "vocab"}}), flush=True)
     config = Config(epochs=args.epochs, patience=args.patience, output_dir=args.output_dir)
     results = [

@@ -162,6 +162,19 @@ python benchmark_side_features.py --epochs 100 --output-dir outputs/side_feature
 
 ## BERT 静态词嵌入排名实验
 
+两种抽取共用 `bert_embeddings.py`，通过 `transformers.AutoTokenizer` 和
+`AutoModel` 加载本地 BERT。`mode="word"` 查询 `get_input_embeddings()`，
+`mode="sentence"` 取 `last_hidden_state`；均排除 `[CLS]`、`[SEP]` 和 padding 后
+取均值，输出冻结的 768 维标题向量。
+
+```python
+from bert_embeddings import default_model_dir, extract_bert_embeddings
+
+titles = ["Toy Story (1995)", "Jumanji (1995)"]
+word_vectors, _ = extract_bert_embeddings(titles, default_model_dir(), mode="word")
+sentence_vectors, _ = extract_bert_embeddings(titles, default_model_dir(), mode="sentence")
+```
+
 `benchmark_bert_static_embeddings.py` 在 10 组排名对比中分别选取验证集 nDCG@10
 最高的 MF 和 NCF 配置（两者均为并集负采样 + MSE），将电影标题切成 uncased
 WordPiece，直接查询 `bert-base-uncased` 的输入词嵌入表，并对标题 token 向量取平均。
@@ -174,7 +187,7 @@ python benchmark_bert_static_embeddings.py --epochs 100 --patience 5
 ```
 
 逐模型指标、最佳 checkpoint 和预计算标题向量保存在
-`outputs/bert_static_word_embedding_mixed_pool_100/`。输出被 `.gitignore` 排除；
+`outputs/bert_static_word_embedding_transformers_100/`。输出被 `.gitignore` 排除；
 已汇总的对照结果见 [BERT_STATIC_RESULTS.md](BERT_STATIC_RESULTS.md)。
 
 第二种方案把完整电影标题（含 `[CLS]`、`[SEP]`）输入 BERT 的 12 层 Transformer，
@@ -186,8 +199,12 @@ python benchmark_bert_contextual_embeddings.py --epochs 100 --patience 5
 ```
 
 逐模型指标、checkpoint 和标题向量保存在
-`outputs/bert_contextual_title_mixed_pool_100/`。对比说明见
+`outputs/bert_contextual_title_transformers_100/`。对比说明见
 [BERT_CONTEXTUAL_RESULTS.md](BERT_CONTEXTUAL_RESULTS.md)。
+
+现有指标与 PDF 来自重写前的抽取实现，未重新训练。旧结果仍保留在
+`outputs/bert_static_word_embedding_mixed_pool_100/` 和
+`outputs/bert_contextual_title_mixed_pool_100/`；新版默认使用上面的独立目录。
 
 ## 自训练 Word2Vec 直接融合
 

@@ -1,5 +1,8 @@
 # BERT 上下文标题编码实验
 
+本文记录重写前的历史实验。当前抽取已改用 `transformers`；新版默认输出到独立目录，
+本表指标尚未按新版重新训练计算。
+
 ## 实现
 
 第二种方式将 MovieLens 的每个电影标题按 BERT uncased WordPiece 规则分词，补上
