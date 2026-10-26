@@ -162,6 +162,10 @@ python benchmark_side_features.py --epochs 100 --output-dir outputs/side_feature
 
 ## BERT 静态词嵌入排名实验
 
+从零实现和训练 BERT 的学习入口是 `classic_bert_from_scratch.py`，默认使用较小网络，
+支持 BERT-base 编码器规格。网络随机初始化，MLM 训练流程和阅读顺序见
+[CLASSIC_BERT_LEARNING.md](CLASSIC_BERT_LEARNING.md)。
+
 Jupyter 手工调试入口为 `debug_movie_embeddings.ipynb`（初始未执行），安装和启动方式见
 [JUPYTER_DEBUG_GUIDE.md](JUPYTER_DEBUG_GUIDE.md)。它从数据集读取标题，先逐步检查小批输入，
 最后分批导出全部电影向量；Notebook 与独立脚本的输出文件分别保存。

@@ -1,0 +1,61 @@
+{
+  "initialization": "random; no pretrained model weights loaded",
+  "task": "MLM only",
+  "size": "tiny",
+  "config": {
+    "vocab_size": 30522,
+    "hidden_size": 128,
+    "num_layers": 2,
+    "num_heads": 4,
+    "intermediate_size": 512,
+    "max_positions": 512,
+    "pad_token_id": 0,
+    "dropout": 0.1
+  },
+  "seed": 42,
+  "train_titles": 1514,
+  "validation_titles": 168,
+  "validation_masking": "fixed once; training masks resampled each batch",
+  "before_training": {
+    "loss": 10.352520078585293,
+    "masked_accuracy": 0.0,
+    "masked_tokens": 181
+  },
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 8.457911666977072,
+      "validation_loss": 6.766845344838517,
+      "validation_masked_accuracy": 0.12154696132596685
+    },
+    {
+      "epoch": 2,
+      "train_loss": 6.031215789975331,
+      "validation_loss": 6.026176293251923,
+      "validation_masked_accuracy": 0.287292817679558
+    },
+    {
+      "epoch": 3,
+      "train_loss": 5.516759781822609,
+      "validation_loss": 5.8112597478687436,
+      "validation_masked_accuracy": 0.292817679558011
+    }
+  ],
+  "best_validation_loss": 5.8112597478687436,
+  "parameters_updated": true,
+  "verification": {
+    "checkpoint_reload": true,
+    "logits_shape": [
+      1,
+      7,
+      30522
+    ],
+    "hidden_shape": [
+      1,
+      7,
+      128
+    ],
+    "matches_transformers_numerical_test": true,
+    "script_sha256": "746fb3b40bbc1c81d796b02f9954d0c9ef69cf91b785f51f3ad7a4b25423802d"
+  }
+}
